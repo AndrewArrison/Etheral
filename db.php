@@ -7,6 +7,6 @@ $dbname = "Chatapp";
 $conn = mysqli_connect($servername, $username, $password, $dbname);
 if($conn)
 {
-    echo "<script>alert('CONNECTED');</script>";
+    // echo "<script>alert('CONNECTED');</script>";
 }
 ?>

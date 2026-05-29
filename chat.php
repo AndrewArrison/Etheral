@@ -30,29 +30,30 @@ $result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="tw.js"></script>
 
     <title>Responsive Chat</title>
 
     <style>
-        html,
-        body {
-            height: 100%;
-            overflow: hidden;
-        }
+    html,
+    body {
+        height: 100%;
+        overflow: hidden;
+    }
 
-        body {
-            margin: 0;
-        }
+    body {
+        margin: 0;
+    }
 
-        /* Better mobile keyboard handling */
-        .chat-wrapper {
-            height: 100dvh;
-        }
+    /* Better mobile keyboard handling */
+    .chat-wrapper {
+        height: 100dvh;
+    }
     </style>
 </head>
 
@@ -64,14 +65,13 @@ $result = $stmt->get_result();
         <!-- Top Bar -->
         <div class="bg-blue-600 text-white p-4 flex items-center gap-4 shadow shrink-0">
 
-            <button class="text-2xl">
-                ←
-            </button>
+            <a href="viewchat.php">
+                <button class="text-2xl">
+                    ←
+                </button>
+            </a>
 
-            <img
-                src="https://i.pravatar.cc/150?img=12"
-                class="w-12 h-12 rounded-full object-cover"
-            >
+            <img src="https://i.pravatar.cc/150?img=12" class="w-12 h-12 rounded-full object-cover">
 
             <div class="flex-1">
                 <h1 class="font-semibold text-lg">
@@ -134,45 +134,29 @@ $result = $stmt->get_result();
         </div>
 
         <!-- Bottom Input -->
-        <div
-            class="bg-white border-t p-3 shrink-0 sticky bottom-0">
+        <div class="bg-white border-t p-3 shrink-0 sticky bottom-0">
 
             <!-- Selected Files -->
-            <div
-                id="previewArea"
-                class="mb-2 space-y-2"
-            ></div>
+            <div id="previewArea" class="mb-2 space-y-2"></div>
 
             <!-- Input Row -->
             <div class="flex items-center gap-2">
 
                 <!-- Upload -->
-                <label
-                    for="fileUpload"
-                    class="bg-gray-100 hover:bg-gray-200 min-w-12 h-12 rounded-full flex items-center justify-center text-2xl cursor-pointer transition"
-                >
+                <label for="fileUpload"
+                    class="bg-gray-100 hover:bg-gray-200 min-w-12 h-12 rounded-full flex items-center justify-center text-2xl cursor-pointer transition">
                     +
                 </label>
 
-                <input
-                    type="file"
-                    id="fileUpload"
-                    class="hidden"
-                    multiple
-                    accept="image/*,.pdf,.doc,.docx,.txt,.zip"
-                >
+                <input type="file" id="fileUpload" class="hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.zip">
 
                 <!-- Input -->
-                <input
-                    type="text"
-                    placeholder="Type a message"
-                    class="flex-1 bg-gray-100 rounded-full px-5 py-3 outline-none"
-                >
+                <input type="text" placeholder="Type a message" id="msgInput"
+                    class="flex-1 bg-gray-100 rounded-full px-5 py-3 outline-none">
 
                 <!-- Send -->
-                <button
-                    class="bg-blue-600 hover:bg-blue-700 text-white min-w-12 h-12 rounded-full text-xl transition"
-                >
+                <button class="bg-blue-600 hover:bg-blue-700 text-white min-w-12 h-12 rounded-full text-xl transition"
+                    id="senderbtn">
                     ➤
                 </button>
 
@@ -183,29 +167,54 @@ $result = $stmt->get_result();
     </div>
 
     <script>
-        const fileUpload = document.getElementById("fileUpload");
-        const previewArea = document.getElementById("previewArea");
-        const chatArea = document.getElementById("chatArea");
+    const fileUpload = document.getElementById("fileUpload");
+    const previewArea = document.getElementById("previewArea");
+    const chatArea = document.getElementById("chatArea");
+    const msgInput = document.getElementById("msgInput");
+    const senderbtn = document.getElementById("senderbtn");
 
-        // File Preview
-        fileUpload.addEventListener("change", () => {
+    //sent message
+    function sentmsg() {
+        if (msgInput.value.trim() == '')
+        {
+            return;
+        }
+        const userData = {
+            message: msgInput.value,
+            chat: <?=$chatid;?>
+        };
 
-            previewArea.innerHTML = "";
+        fetch('sent_msg.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData) // Convert object to JSON string
+            })
+        msgInput.value = '';
+            // .then(response => response.json()) // Parse JSON response from server
+    }
+    senderbtn.addEventListener("click", sentmsg);
 
-            Array.from(fileUpload.files).forEach(file => {
+    // File Preview
+    fileUpload.addEventListener("change", () => {
 
-                const item = document.createElement("div");
+        previewArea.innerHTML = "";
 
-                item.className =
-                    "bg-gray-100 rounded-lg p-3 flex items-center gap-3";
+        Array.from(fileUpload.files).forEach(file => {
 
-                let icon = "📄";
+            const item = document.createElement("div");
 
-                if (file.type.startsWith("image/")) {
-                    icon = "🖼️";
-                }
+            item.className =
+                "bg-gray-100 rounded-lg p-3 flex items-center gap-3";
 
-                item.innerHTML = `
+            let icon = "📄";
+
+            if (file.type.startsWith("image/")) {
+                icon = "🖼️";
+            }
+
+            item.innerHTML = `
                     <div class="text-2xl">${icon}</div>
 
                     <div class="flex-1 overflow-hidden">
@@ -219,75 +228,90 @@ $result = $stmt->get_result();
                     </div>
                 `;
 
-                previewArea.appendChild(item);
-            });
-
+            previewArea.appendChild(item);
         });
 
-        // Always stay at bottom
-        function scrollToBottom() {
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }
+    });
 
-        scrollToBottom();
+    // Always stay at bottom
+    function scrollToBottom() {
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
 
-        // Mobile keyboard resize fix
-        if (window.visualViewport) {
+    scrollToBottom();
 
-            window.visualViewport.addEventListener("resize", () => {
+    // Mobile keyboard resize fix
+    if (window.visualViewport) {
 
-                document.querySelector(".chat-wrapper").style.height =
-                    window.visualViewport.height + "px";
+        window.visualViewport.addEventListener("resize", () => {
 
-                scrollToBottom();
-            });
-        }
-        let lastMessageId = 0;
-        async function getPhpData() {
-            try {
-                const response = await fetch("load_msg.php?user=<?= $user?>&chat=<?= $chatid?>&last_message_id=" + lastMessageId);
-                const data = await response.json(); // Parses the JSON automatically
+            document.querySelector(".chat-wrapper").style.height =
+                window.visualViewport.height + "px";
 
-                // Read them into separate JS buffers
-                const buffer1 = data.buffer1;
-                const buffer2 = data.buffer2;
+            scrollToBottom();
+        });
+    }
+    let lastMessageId = 0;
+    //root 7
+    async function loadMessages() {
+        try {
+            const response = await fetch("load_msg.php?user=<?= $user?>&chat=<?= $chatid?>&last_message_id=" +
+                lastMessageId);
+            // This will now parse a clean array: [ {msg_id: 1, msg: "hi"}, {msg_id: 2, msg: "hello"} ]
+            // console.log(response.text());
+            const data = await response.json();
+            let chat = document.getElementById("chatArea");
+            let user = <?= $_SESSION['id']; ?>
+            // Loop through all received messages
+            data.forEach(item => {
+                if (item.msg.trim() !== "") {
+                    let recevied = `${item.sender}`;
+                    let messageHtml = "nothing";
+                    const date = item.time.replace(" ", "T");
 
-                console.log("JS Buffer 1:", buffer1);
-                console.log("JS Buffer 2:", buffer2);
-                
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        }
-        function loadMessages() {
-            fetch("load_msg.php?user=<?= $user?>&chat=<?= $chatid?>&last_message_id=" + lastMessageId)
-
-            .then(res => res.text())
-
-            .then(data => {
-
-                if(data.trim() !== "") {
-                    if (data.includes("bye")) 
-                    {
-                        
+                    const time12hr = new Date(date).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true
+                    });
+                    if (recevied != user) {
+                        //we got it
+                        messageHtml = `<div class="flex msg-d" data-id="1">
+                                            <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
+                                                <p>${item.msg}</p>
+                                                <span class="text-xs text-gray-500 block text-right mt-1">${time12hr}</span>
+                                        </div></div>`;
+                    } else {
+                        //we sent it
+                        messageHtml = `<div class="flex justify-end msg-d" data-id="2">
+                                    <div class="bg-blue-500 text-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
+                                        <p>${item.msg}</p>
+                                    <span class="text-xs text-blue-100 block text-right mt-1">
+                                        ${time12hr}
+                                    </span>
+                                </div>
+                                </div>`;
                     }
-                    let chat = document.getElementById("chatArea");
+                    // let messageHtml = `<div class="msg-d" data-id="${item.msg_id}">${item.msg}</div>`;
+                    chat.insertAdjacentHTML("beforeend", messageHtml);
 
-                    chat.insertAdjacentHTML("beforeend", data);
-
-                    let messages = chat.querySelectorAll(".msg-d");
-
-                    // lastMessageId =
-                    //     messages[messages.length - 1]
-                    //     .dataset.id;
-                    lastMessageId = 3;
-                    //chat.scrollTop = chat.scrollHeight;
+                    // Update your lastMessageId tracking dynamically instead of hardcoding '3'
+                    lastMessageId = item.msg_id;
                 }
             });
-        }
-        setInterval(loadMessages, 1000);
 
+            // Optional: Scroll to bottom automatically when new messages arrive
+            // if(data.length > 0) { chat.scrollTop = chat.scrollHeight; }
+
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }
+
+    // Poll the database every 1 second
+    setInterval(loadMessages, 1000);
     </script>
 
 </body>
+
 </html>

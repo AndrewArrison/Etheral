@@ -39,18 +39,21 @@ $stmt->execute();
 
 $result = $stmt->get_result();
 
-while($row = $result->fetch_assoc())
-{
-    if($row['sender_id'] != $user)
-    {
-        // echo '<p>hi</p>'.$row['id'].''.$row['message_text'];
-        $response = [
+
+// ... Your database connection and query logic ...
+// Make absolutely sure there are NO echo, print, or <script> tags above this line!
+
+$messages = []; // Create a master array
+
+while ($row = $result->fetch_assoc()) {
+    // Push each message object into our master array
+    $messages[] = [
         'msg_id' => $row['id'],
-        'msg' => $row['message_text']
-        ];
-
-            // Output as a single JSON string
-        echo json_encode($response);
-    }
-
+        'sender' => $row['sender_id'],
+        'time' => $row['created_at'],
+        'msg'    => $row['message_text']
+    ];
 }
+// Output the entire collection as ONE valid JSON array
+echo json_encode($messages);
+exit;

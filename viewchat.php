@@ -7,7 +7,8 @@ if (!isset($_SESSION["user"])) {
     exit();
 }
 include "db.php";
-$sql = "SELECT * FROM users";
+$id = $_SESSION['id'];
+$sql = "SELECT * FROM users WHERE id != $id";
 $result = mysqli_query($conn, $sql);
 if(mysqli_num_rows($result) > 0)
 {
