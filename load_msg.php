@@ -39,19 +39,49 @@ $stmt->execute();
 
 $result = $stmt->get_result();
 
-
-// ... Your database connection and query logic ...
-// Make absolutely sure there are NO echo, print, or <script> tags above this line!
-
-$messages = []; // Create a master array
+$messages = []; 
 
 while ($row = $result->fetch_assoc()) {
-    // Push each message object into our master array
+    // if ($row['message_type'] == "text")
+    // {
+    //     $messages[] = [
+    //         'msg_id' => $row['id'],
+    //         'type' => $row['message_type'],
+    //         'sender' => $row['sender_id'],
+    //         'time' => $row['created_at'],
+    //         'msg'    => $row['message_text']
+    //     ];
+    // }
+    // elseif($row['message_type'] == "file")
+    // {
+    //     $messages[] = [
+    //         'msg_id' => $row['id'],
+    //         'type' => $row['message_type'],
+    //         'filename' => $row['file_name'],
+    //         'sender' => $row['sender_id'],
+    //         'time' => $row['created_at'],
+    //         'msg'    => $row['message_text'],
+    //         'filesize' => $row['file_size'] ?? "",
+    //     ];
+    // } 
+    // else {
+    //     $messages[] = [
+    //         'msg_id' => $row['id'],
+    //         'type' => $row['message_type'],
+    //         'filename' => $row['file_name'],
+    //         'sender' => $row['sender_id'],
+    //         'time' => $row['created_at'],
+    //         'msg'    => $row['message_text']
+    //     ];
+    // }
     $messages[] = [
-        'msg_id' => $row['id'],
-        'sender' => $row['sender_id'],
-        'time' => $row['created_at'],
-        'msg'    => $row['message_text']
+            'msg_id' => $row['id'],
+            'type' => $row['message_type'] ?? "",
+            'filename' => $row['file_name'] ?? "",
+            'sender' => $row['sender_id'] ?? "",
+            'time' => $row['created_at'] ?? "",
+            'msg'    => $row['message_text'] ?? "",
+            'filesize' => $row['file_size'] ?? "",
     ];
 }
 // Output the entire collection as ONE valid JSON array

@@ -1,0 +1,74 @@
+            <!-- Receiver -->
+            <div class="flex msg-d" data-id="1">
+
+                <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
+
+                    <p>
+                        Hey, this should behave like WhatsApp now.
+                    </p>
+
+                    <span class="text-xs text-gray-500 block text-right mt-1">
+                        10:10 AM
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Sender -->
+            <div class="flex justify-end msg-d" data-id="2">
+
+                <div class="bg-blue-500 text-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
+
+                    <p>
+                        Nice. The input stays fixed now.
+                    </p>
+
+                    <span class="text-xs text-blue-100 block text-right mt-1">
+                        10:12 AM
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Image Message -->
+            <div class="flex justify-end">
+
+                <div class="bg-green-500 p-2 rounded-2xl max-w-[75%] shadow">
+
+                    <img
+                        src="https://picsum.photos/300/200"
+                        class="rounded-xl w-full object-cover"
+                    >
+
+                    <span class="text-xs text-green-100 block text-right mt-2">
+                        10:15 AM
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- PDF/File Message -->
+            <div class="flex">
+
+                <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%] flex items-center gap-3">
+
+                    <div class="text-3xl">
+                        📄
+                    </div>
+
+                    <div>
+                        <h2 class="font-medium">
+                            notes.pdf
+                        </h2>
+
+                        <p class="text-sm text-gray-500">
+                            2.4 MB
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>

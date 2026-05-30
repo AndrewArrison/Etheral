@@ -96,39 +96,6 @@ $result = $stmt->get_result();
         <!-- Messages -->
         <div id="chatArea" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100">
 
-            <!-- Receiver -->
-            <div class="flex msg-d" data-id="1">
-
-                <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
-
-                    <p>
-                        Hey, this should behave like WhatsApp now.
-                    </p>
-
-                    <span class="text-xs text-gray-500 block text-right mt-1">
-                        10:10 AM
-                    </span>
-
-                </div>
-
-            </div>
-
-            <!-- Sender -->
-            <div class="flex justify-end msg-d" data-id="2">
-
-                <div class="bg-blue-500 text-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
-
-                    <p>
-                        Nice. The input stays fixed now.
-                    </p>
-
-                    <span class="text-xs text-blue-100 block text-right mt-1">
-                        10:12 AM
-                    </span>
-
-                </div>
-
-            </div>
 
 
         </div>
@@ -148,7 +115,7 @@ $result = $stmt->get_result();
                     +
                 </label>
 
-                <input type="file" id="fileUpload" class="hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.zip">
+                <input type="file" id="fileUpload" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt,.zip,video/*">
 
                 <!-- Input -->
                 <input type="text" placeholder="Type a message" id="msgInput"
@@ -174,25 +141,61 @@ $result = $stmt->get_result();
     const senderbtn = document.getElementById("senderbtn");
 
     //sent message
-    function sentmsg() {
-        if (msgInput.value.trim() == '')
-        {
+    async function sentmsg() {
+        if (msgInput.value.trim() == '' && fileUpload.files.length === 0) {
             return;
         }
-        const userData = {
-            message: msgInput.value,
-            chat: <?=$chatid;?>
-        };
+        try {
+            if (fileUpload.files.length > 0) {
+                
+                const formData = new FormData();
 
-        fetch('sent_msg.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(userData) // Convert object to JSON string
-            })
-        msgInput.value = '';
-            // .then(response => response.json()) // Parse JSON response from server
+                if (fileUpload.files.length > 0) {
+                    formData.append('file', fileUpload.files[0]);
+                }
+
+                if (fileUpload.files[0].type.startsWith("image/"))
+                {
+                     formData.append('message_type', "image");
+                } else if (fileUpload.files[0].type.includes("pdf"))
+                {
+                    formData.append('message_type', "file");
+                } else if (fileUpload.files[0].type.startsWith("video"))
+                {
+                    formData.append('message_type', "video");
+                }
+
+                formData.append('message', msgInput.value);
+                formData.append('receiver_id', <?=$chatid;?>);
+                formData.append('file_size',(fileUpload.files[0].size / 1024 / 1024).toFixed(2) )
+
+                const res = await fetch('sent_msg.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                // const text = await res.text();
+                // console.log(text);
+                msgInput.value = '';
+                fileUpload.value = "";
+                previewArea.innerHTML = "";
+            } else {
+                const formData = new FormData();
+
+                // 2. Add your text data to the same FormData object
+                formData.append('message', msgInput.value);
+                formData.append('receiver_id', <?=$chatid;?>);
+                const res = await fetch('sent_msg.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                // const text = await res.text();
+                // console.log(text);
+                msgInput.value = '';
+            }
+        } catch (error) {
+            console.error("Error sending data : ", error);
+        }
+
     }
     senderbtn.addEventListener("click", sentmsg);
 
@@ -211,7 +214,7 @@ $result = $stmt->get_result();
             let icon = "📄";
 
             if (file.type.startsWith("image/")) {
-                icon = "🖼️";
+                icon = "🌄";
             }
 
             item.innerHTML = `
@@ -225,12 +228,22 @@ $result = $stmt->get_result();
                         <p class="text-sm text-gray-500">
                             ${(file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
+                            <button class="text-2xl closefile">
+                                ✖
+                            </button>
                     </div>
                 `;
-
             previewArea.appendChild(item);
         });
 
+    });
+    // close selected file
+    previewArea.addEventListener("click", (e) => {
+        if (e.target.closest(".closefile")) {
+            fileUpload.value = "";
+            previewArea.innerHTML = "";
+
+        }
     });
 
     // Always stay at bottom
@@ -257,14 +270,13 @@ $result = $stmt->get_result();
         try {
             const response = await fetch("load_msg.php?user=<?= $user?>&chat=<?= $chatid?>&last_message_id=" +
                 lastMessageId);
-            // This will now parse a clean array: [ {msg_id: 1, msg: "hi"}, {msg_id: 2, msg: "hello"} ]
             // console.log(response.text());
             const data = await response.json();
             let chat = document.getElementById("chatArea");
             let user = <?= $_SESSION['id']; ?>
             // Loop through all received messages
             data.forEach(item => {
-                if (item.msg.trim() !== "") {
+                if (item.msg.trim() !== "" || item.message_type !== "text") {
                     let recevied = `${item.sender}`;
                     let messageHtml = "nothing";
                     const date = item.time.replace(" ", "T");
@@ -274,29 +286,112 @@ $result = $stmt->get_result();
                         minute: "2-digit",
                         hour12: true
                     });
-                    if (recevied != user) {
-                        //we got it
-                        messageHtml = `<div class="flex msg-d" data-id="1">
-                                            <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
-                                                <p>${item.msg}</p>
-                                                <span class="text-xs text-gray-500 block text-right mt-1">${time12hr}</span>
-                                        </div></div>`;
+                    if (item.type == "image") {
+                        if (recevied != user) {
+                            //we got it
+                            messageHtml = `<div class="flex">
+                                        <div class="bg-white-500 p-2 rounded-2xl max-w-[75%] shadow">
+                                            <a href="uploads/${item.filename}" download><img src="uploads/${item.filename}" class="rounded-xl w-full object-cover"></a>
+                                            <p>${item.msg}</p>
+                                            <span class="text-xs text-gray-500 block text-right mt-1">
+                                            ${time12hr}
+                                            </span></div> </div>`;
+                        } else {
+                            //we sent it
+                            messageHtml = `<div class="flex justify-end">
+                                        <div class="bg-blue-500 p-2 rounded-2xl max-w-[75%] shadow">
+                                            <a href="uploads/${item.filename}" download><img src="uploads/${item.filename}" class="rounded-xl w-full object-cover"></a>
+                                            <p>${item.msg}</p>
+                                            <span class="text-xs text-blue-100 block text-right mt-1">
+                                            ${time12hr}
+                                            </span></div> </div>`;
+                        }
+                        chat.insertAdjacentHTML("beforeend", messageHtml);
+                        lastMessageId = item.msg_id;
+                    } else if (item.type=="video") 
+                    {
+                                                if (recevied != user) {
+                            //we got it
+                            messageHtml = `<div class="flex">
+                                        <div class="bg-white-500 p-2 rounded-2xl max-w-[75%] shadow">
+                                            <a href="uploads/${item.filename}" download><video src="uploads/${item.filename}" controls preload="metadata" class="rounded-xl w-full object-cover"></a>
+                                            <p>${item.msg}</p>
+                                            <span class="text-xs text-gray-500 block text-right mt-1">
+                                            ${time12hr}
+                                            </span></div> </div>`;
+                        } else {
+                            //we sent it
+                            messageHtml = `<div class="flex justify-end">
+                                        <div class="bg-blue-500 p-2 rounded-2xl max-w-[75%] shadow">
+                                            <a href="uploads/${item.filename}" download><video src="uploads/${item.filename}" controls  preload="metadata"  class="rounded-xl w-full object-cover"></a>
+                                            <p>${item.msg}</p>
+                                            <span class="text-xs text-blue-100 block text-right mt-1">
+                                            ${time12hr}
+                                            </span></div> </div>`;
+                        }
+                        chat.insertAdjacentHTML("beforeend", messageHtml);
+                        lastMessageId = item.msg_id;
+                    }else if (item.type == "file") {
+                        if (recevied != user) {
+                            messageHtml = `<div class="flex">
+                                            <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%] flex items-center gap-3">
+                                            <div class="text-3xl">
+                                                📄
+                                            </div>
+                                            <div>
+                                                <h2 class="font-medium">
+                                                    ${item.filename.slice(11)}
+                                                </h2>
+                                                <p class="text-sm text-gray-500">
+                                                    ${item.filesize} MB
+                                                </p><span class="text-xs text-blue-100 block text-right mt-1">
+                                            ${time12hr}
+                                        </span></div></div></div>`
+                        } else {
+                            let filename = item.filename
+                            messageHtml = `<div class="flex justify-end">
+                                            <div class="bg-blue-500 px-4 py-3 rounded-2xl shadow max-w-[75%] flex items-center gap-3">
+                                            <div class="text-3xl">
+                                                <a href="uploads/${item.filename}" download>📄</a>
+                                            </div>
+                                            <div>
+                                                <h2 class="font-medium">
+                                                   ${item.filename.slice(11)}
+                                                </h2>
+                                                <p class="text-sm text-blue-100">
+                                                    ${item.filesize} MB
+                                                </p>
+                                                 <span class="text-xs text-blue-100 block text-right mt-1">
+                                            ${time12hr}
+                                        </span></div></div></div>`
+                        }
+                        chat.insertAdjacentHTML("beforeend", messageHtml);
+                        lastMessageId = item.msg_id;
                     } else {
-                        //we sent it
-                        messageHtml = `<div class="flex justify-end msg-d" data-id="2">
-                                    <div class="bg-blue-500 text-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
-                                        <p>${item.msg}</p>
-                                    <span class="text-xs text-blue-100 block text-right mt-1">
-                                        ${time12hr}
-                                    </span>
-                                </div>
-                                </div>`;
-                    }
-                    // let messageHtml = `<div class="msg-d" data-id="${item.msg_id}">${item.msg}</div>`;
-                    chat.insertAdjacentHTML("beforeend", messageHtml);
+                        if (recevied != user) {
+                            //we got it
+                            messageHtml = `<div class="flex msg-d" data-id="1">
+                                                <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
+                                                    <p>${item.msg}</p>
+                                                    <span class="text-xs text-gray-500 block text-right mt-1">${time12hr}</span>
+                                            </div></div>`;
+                        } else {
+                            //we sent it
+                            messageHtml = `<div class="flex justify-end msg-d" data-id="2">
+                                        <div class="bg-blue-500 text-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
+                                            <p>${item.msg}</p>
+                                        <span class="text-xs text-blue-100 block text-right mt-1">
+                                            ${time12hr}
+                                        </span>
+                                    </div>
+                                    </div>`;
+                        }
+                        // let messageHtml = `<div class="msg-d" data-id="${item.msg_id}">${item.msg}</div>`;
+                        chat.insertAdjacentHTML("beforeend", messageHtml);
 
-                    // Update your lastMessageId tracking dynamically instead of hardcoding '3'
-                    lastMessageId = item.msg_id;
+                        // Update your lastMessageId tracking dynamically instead of hardcoding '3'
+                        lastMessageId = item.msg_id;
+                    }
                 }
             });
 

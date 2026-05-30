@@ -11,7 +11,7 @@ CREATE TABLE messages (
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
 
-    message_type ENUM('text', 'image', 'file', 'voice') DEFAULT 'text',
+    message_type ENUM('text', 'image', 'file', 'voice', 'video') DEFAULT 'text',
 
     message_text TEXT,
 
