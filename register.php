@@ -1,32 +1,24 @@
 <?php
-$servername = "localhost";
-$username = "root";     // Default XAMPP/WAMP user
-$password = "";         // Default XAMPP password is empty
-$dbname = "Chatapp";
 
-// Create connection
-$conn = mysqli_connect($servername, $username, $password, $dbname);
-
-// Check connection
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
-} else {
-    echo "Connected";
-}
-// echo "Connected successfully";
+include "db.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $usernamea = $_POST["username"];
     $passworda = $_POST["password"];
-
-    // hash password
-    $hashedPassword = password_hash($passworda, PASSWORD_DEFAULT);
-    $sql = "INSERT INTO users (username, password_hash) 
-    VALUES ('$usernamea','$hashedPassword')";
-    if (mysqli_query($conn, $sql)) {
-        echo "User created!";
+    $sql = "SELECT * FROM users WHERE username = '$usernamea'";
+    $result = mysqli_query($conn, $sql);
+    $rows = mysqli_num_rows($result);
+    if ($rows > 0)
+    {
+        //TODO
+        echo "<script>alert('Username Not Available')</script>;";
     } else {
-        echo "Error: " . mysqli_error($conn);
+        // hash password
+        $hashedPassword = password_hash($passworda, PASSWORD_DEFAULT);
+        $sql = "INSERT INTO users (username, password_hash) 
+        VALUES ('$usernamea','$hashedPassword')";
+        $result = mysqli_query($conn, $sql);
+        header("login.php");
     }
 }
 ?>
@@ -116,7 +108,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     </div>
 
-    <!-- <script>
+    <script>
     const upload = document.getElementById("imageUpload");
     const preview = document.getElementById("preview");
     const placeholder = document.getElementById("placeholder");
@@ -130,7 +122,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             placeholder.classList.add("hidden");
         }
     });
-    </script> -->
+    </script>
 
 </body>
 

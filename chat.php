@@ -7,7 +7,15 @@ if (!isset($_SESSION["user"])) {
     exit();
 }
 include "db.php";
-$chatid = $_GET['chat'];
+$chatid = 0;
+if($_SERVER['REQUEST_METHOD'] === 'POST')
+{
+    $chatid = isset($_POST['id']) ? htmlspecialchars($_POST['id']) : 0;
+} else {
+    header("Location: logout.php");
+    exit();
+}
+
 $sql = "SELECT * FROM users WHERE id = $chatid";
 $result = mysqli_query($conn, $sql);
 $result = $result->fetch_assoc();
@@ -34,7 +42,7 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-
+    <script src="chat.js"></script>
     <script src="tw.js"></script>
 
     <title>Responsive Chat</title>
@@ -264,6 +272,14 @@ $result = $stmt->get_result();
             scrollToBottom();
         });
     }
+    function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
     let lastMessageId = 0;
     //root 7
     async function loadMessages() {
@@ -276,32 +292,28 @@ $result = $stmt->get_result();
             let user = <?= $_SESSION['id']; ?>
             // Loop through all received messages
             data.forEach(item => {
-                if (item.msg.trim() !== "" || item.message_type !== "text") {
+                if (item.msg.trim() !== "" || item.type !== "text") {
                     let recevied = `${item.sender}`;
                     let messageHtml = "nothing";
-                    const date = item.time.replace(" ", "T");
-
-                    const time12hr = new Date(date).toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true
-                    });
+                    
+                    const time12hr = timeto12(item.time);
                     if (item.type == "image") {
+                    //image
                         if (recevied != user) {
                             //we got it
                             messageHtml = `<div class="flex">
                                         <div class="bg-white-500 p-2 rounded-2xl max-w-[75%] shadow">
-                                            <a href="uploads/${item.filename}" download><img src="uploads/${item.filename}" class="rounded-xl w-full object-cover"></a>
-                                            <p>${item.msg}</p>
+                                            <a href="uploads/${item.filename_store}" download><img src="uploads/${item.filename_store}" data-src="uploads/${item.filename_store}" class="rounded-xl w-full object-cover"></a>
+                                            <p>${escapeHtml(item.msg)}</p>
                                             <span class="text-xs text-gray-500 block text-right mt-1">
                                             ${time12hr}
                                             </span></div> </div>`;
                         } else {
                             //we sent it
                             messageHtml = `<div class="flex justify-end">
-                                        <div class="bg-blue-500 p-2 rounded-2xl max-w-[75%] shadow">
-                                            <a href="uploads/${item.filename}" download><img src="uploads/${item.filename}" class="rounded-xl w-full object-cover"></a>
-                                            <p>${item.msg}</p>
+                                        <div class="bg-blue-500 text-blue-100 p-2 rounded-2xl max-w-[75%] shadow">
+                                            <a href="uploads/${item.filename_store}" download><img src="uploads/${item.filename_store}" data-src="uploads/${item.filename_store}" class="rounded-xl w-full object-cover"></a>
+                                            <p>${escapeHtml(item.msg)}</p>
                                             <span class="text-xs text-blue-100 block text-right mt-1">
                                             ${time12hr}
                                             </span></div> </div>`;
@@ -314,8 +326,8 @@ $result = $stmt->get_result();
                             //we got it
                             messageHtml = `<div class="flex">
                                         <div class="bg-white-500 p-2 rounded-2xl max-w-[75%] shadow">
-                                            <a href="uploads/${item.filename}" download><video src="uploads/${item.filename}" controls preload="metadata" class="rounded-xl w-full object-cover"></a>
-                                            <p>${item.msg}</p>
+                                            <a href="uploads/${item.filename_store}" download><video src="uploads/${item.filename_store}" data-src="uploads/${item.filename_store}" controls preload="metadata" class="rounded-xl w-full object-cover"></a>
+                                            <p>${escapeHtml(item.msg)}</p>
                                             <span class="text-xs text-gray-500 block text-right mt-1">
                                             ${time12hr}
                                             </span></div> </div>`;
@@ -323,8 +335,9 @@ $result = $stmt->get_result();
                             //we sent it
                             messageHtml = `<div class="flex justify-end">
                                         <div class="bg-blue-500 p-2 rounded-2xl max-w-[75%] shadow">
-                                            <a href="uploads/${item.filename}" download><video src="uploads/${item.filename}" controls  preload="metadata"  class="rounded-xl w-full object-cover"></a>
-                                            <p>${item.msg}</p>
+                                            <a href="uploads/${item.filename_store}" download><video src="uploads/${item.filename_store}" data-src="uploads/${item.filename_store}"
+                                             controls  preload="metadata"  class="rounded-xl w-full object-cover"></a>
+                                            <p>${escapeHtml(item.msg)}</p>
                                             <span class="text-xs text-blue-100 block text-right mt-1">
                                             ${time12hr}
                                             </span></div> </div>`;
@@ -340,7 +353,7 @@ $result = $stmt->get_result();
                                             </div>
                                             <div>
                                                 <h2 class="font-medium">
-                                                    ${item.filename.slice(11)}
+                                                    ${escapeHtml(item.filename)}
                                                 </h2>
                                                 <p class="text-sm text-gray-500">
                                                     ${item.filesize} MB
@@ -348,15 +361,14 @@ $result = $stmt->get_result();
                                             ${time12hr}
                                         </span></div></div></div>`
                         } else {
-                            let filename = item.filename
                             messageHtml = `<div class="flex justify-end">
                                             <div class="bg-blue-500 px-4 py-3 rounded-2xl shadow max-w-[75%] flex items-center gap-3">
                                             <div class="text-3xl">
-                                                <a href="uploads/${item.filename}" download>📄</a>
+                                                <a href="uploads/${item.filename_store}" download>📄</a>
                                             </div>
                                             <div>
                                                 <h2 class="font-medium">
-                                                   ${item.filename.slice(11)}
+                                                   ${escapeHtml(item.filename)}
                                                 </h2>
                                                 <p class="text-sm text-blue-100">
                                                     ${item.filesize} MB
@@ -372,24 +384,22 @@ $result = $stmt->get_result();
                             //we got it
                             messageHtml = `<div class="flex msg-d" data-id="1">
                                                 <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
-                                                    <p>${item.msg}</p>
+                                                    <p>${escapeHtml(item.msg)}</p>
                                                     <span class="text-xs text-gray-500 block text-right mt-1">${time12hr}</span>
                                             </div></div>`;
                         } else {
                             //we sent it
                             messageHtml = `<div class="flex justify-end msg-d" data-id="2">
                                         <div class="bg-blue-500 text-white px-4 py-3 rounded-2xl shadow max-w-[75%]">
-                                            <p>${item.msg}</p>
+                                            <p>${escapeHtml(item.msg)}</p>
                                         <span class="text-xs text-blue-100 block text-right mt-1">
                                             ${time12hr}
                                         </span>
                                     </div>
                                     </div>`;
                         }
-                        // let messageHtml = `<div class="msg-d" data-id="${item.msg_id}">${item.msg}</div>`;
                         chat.insertAdjacentHTML("beforeend", messageHtml);
 
-                        // Update your lastMessageId tracking dynamically instead of hardcoding '3'
                         lastMessageId = item.msg_id;
                     }
                 }
@@ -398,13 +408,13 @@ $result = $stmt->get_result();
             // Optional: Scroll to bottom automatically when new messages arrive
             // if(data.length > 0) { chat.scrollTop = chat.scrollHeight; }
 
-        } catch (error) {
+        }catch (error) {
             console.error("Error fetching data:", error);
+        } finally {
+                setTimeout(loadMessages, 1000);
         }
     }
-
-    // Poll the database every 1 second
-    setInterval(loadMessages, 1000);
+    loadMessages();
     </script>
 
 </body>

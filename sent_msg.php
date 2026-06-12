@@ -21,13 +21,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_FILES['file']))
     exit;
 } else {
     $targetDir = "uploads/";
-    if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
-    $file_name = time() . "_" . basename($_FILES["file"]["name"]);
-    $targetFile = $targetDir . $file_name;
+    if (!is_dir($targetDir)) {
+        mkdir($targetDir, 0777, true);
+    }
+    // Original filename (for display)
+    $original_name = basename($_FILES["file"]["name"]);
+    // Get extension
+    $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+    // Generate safe storage filename
+    $stored_name = uniqid('', true) . "." . $extension;
+    // Full path
+    $targetFile = $targetDir . $stored_name;
     if (move_uploaded_file($_FILES["file"]["tmp_name"], $targetFile)) {
-        // echo "File uploaded successfully: " . $targetFile;
+        // Upload successful
     } else {
-        // echo "Error: Could not move uploaded file.";
+        die("Upload failed");
     }
     $receiver_id = $_POST['receiver_id'] ?? '';
     $user = (int)$_SESSION['id'];
@@ -35,9 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_FILES['file']))
     
     $file_type = $_POST['message_type'];
     $file_size = $_POST['file_size'];
-    $sql = "INSERT INTO `messages`(`sender_id`, `receiver_id`, `message_text`, `message_type`, `file_name`, `file_size`) VALUES (?,?,?,?,?,?)";
+    $sql = "INSERT INTO `messages`(`sender_id`, `receiver_id`, `message_text`, `message_type`, `file_name`, `file_size`, `org_file_name`) VALUES (?,?,?,?,?,?,?)";
     $statement = $conn->prepare($sql);
-    $statement->bind_param("iisssd", $user, $receiver_id, $msg, $file_type, $file_name, $file_size);
+    $statement->bind_param("iisssds", $user, $receiver_id, $msg, $file_type, $stored_name, $file_size, $original_name);
     $statement->execute();
     exit;
 }

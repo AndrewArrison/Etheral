@@ -29,15 +29,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $_SESSION["user"] = $user["username"];
             $_SESSION["id"] = $user["id"];
+            $userid = $user["id"];
+            $sql = "UPDATE users SET last_seen = now() WHERE id = $userid";
+            mysqli_query($conn, $sql);
             header("Location: viewchat.php");
             exit();
 
         } else {
-            echo "Wrong password";
+            echo "<script>
+window.addEventListener('load', () => {
+    const errordiv = document.getElementById('errordiv');
+    errordiv.classList.remove(`hidden`);
+});</script>";
         }
 
     } else {
-        echo "User not found";
+        echo "<script>
+window.addEventListener('load', () => {
+    const errordiv = document.getElementById('nouserdiv');
+    errordiv.classList.remove(`hidden`);
+});</script>";
     }
 }
 ?>
@@ -52,7 +63,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
     <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
-
+        <div class="w-full bg-red-600 text-white py-3 my-3 rounded-lg transition flex justify-center hidden" id="errordiv" disabled>
+                Wrong Password/Username
+        </div>
+        <div class="w-full bg-red-600 text-white py-3 my-3 rounded-lg transition flex justify-center hidden" id="nouserdiv" disabled>
+                User not found
+        </div>
         <h1 class="text-3xl font-bold text-center mb-6">
             Login
         </h1>

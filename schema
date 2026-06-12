@@ -2,7 +2,9 @@ CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    profile_image VARCHAR(124) NOT NULL
 );
 
 CREATE TABLE messages (
@@ -17,8 +19,9 @@ CREATE TABLE messages (
 
     file_path VARCHAR(500),
     file_name VARCHAR(255),
+    org_file_name VARCHAR(255),
     mime_type VARCHAR(100),
-    file_size BIGINT,
+    file_size FLOAT,
 
     is_seen BOOLEAN DEFAULT FALSE,
 

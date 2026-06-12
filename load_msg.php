@@ -42,42 +42,12 @@ $result = $stmt->get_result();
 $messages = []; 
 
 while ($row = $result->fetch_assoc()) {
-    // if ($row['message_type'] == "text")
-    // {
-    //     $messages[] = [
-    //         'msg_id' => $row['id'],
-    //         'type' => $row['message_type'],
-    //         'sender' => $row['sender_id'],
-    //         'time' => $row['created_at'],
-    //         'msg'    => $row['message_text']
-    //     ];
-    // }
-    // elseif($row['message_type'] == "file")
-    // {
-    //     $messages[] = [
-    //         'msg_id' => $row['id'],
-    //         'type' => $row['message_type'],
-    //         'filename' => $row['file_name'],
-    //         'sender' => $row['sender_id'],
-    //         'time' => $row['created_at'],
-    //         'msg'    => $row['message_text'],
-    //         'filesize' => $row['file_size'] ?? "",
-    //     ];
-    // } 
-    // else {
-    //     $messages[] = [
-    //         'msg_id' => $row['id'],
-    //         'type' => $row['message_type'],
-    //         'filename' => $row['file_name'],
-    //         'sender' => $row['sender_id'],
-    //         'time' => $row['created_at'],
-    //         'msg'    => $row['message_text']
-    //     ];
-    // }
+
     $messages[] = [
             'msg_id' => $row['id'],
             'type' => $row['message_type'] ?? "",
-            'filename' => $row['file_name'] ?? "",
+            'filename_store' => $row['file_name'] ?? "",
+            'filename' => $row['org_file_name'] ?? "",
             'sender' => $row['sender_id'] ?? "",
             'time' => $row['created_at'] ?? "",
             'msg'    => $row['message_text'] ?? "",
