@@ -11,14 +11,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($rows > 0)
     {
         //TODO
-        echo "<script>alert('Username Not Available')</script>;";
+        echo "<script>
+window.addEventListener('load', () => {
+    const errordiv = document.getElementById('unavailUser');
+    errordiv.classList.remove(`hidden`);
+});</script>";
     } else {
+        $fileName = "";
+        if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = 'profilepics/';
+            $fileName = basename($_FILES['profile_image']['name']);
+            $targetPath = $uploadDir . $fileName;
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $targetPath)) {
+                // $message = "File uploaded successfully: " . htmlspecialchars($fileName);
+                // echo $message;
+                $hashedPassword = password_hash($passworda, PASSWORD_DEFAULT);
+                $sql = "INSERT INTO users (username, password_hash, profile_image) 
+                VALUES ('$usernamea','$hashedPassword', '$fileName')";
+                $result = mysqli_query($conn, $sql);
+                header("Location: login.php");
+                
+            } else {
+                // $message = "Error moving the uploaded file.";
+                // echo $message;
+                 echo "<script>
+    window.addEventListener('load', () => {
+        const errordiv = document.getElementById('imageunload');
+        errordiv.classList.remove(`hidden`);
+    });</script>";
+            }
+        } else {
+            // $message = "Error code: " . $_FILES['profile_image']['error'];
+            // echo $message;
+            echo "<script>
+    window.addEventListener('load', () => {
+        const errordiv = document.getElementById('imageunload');
+        errordiv.classList.remove(`hidden`);
+    });</script>";
+        }
         // hash password
-        $hashedPassword = password_hash($passworda, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO users (username, password_hash) 
-        VALUES ('$usernamea','$hashedPassword')";
-        $result = mysqli_query($conn, $sql);
-        header("login.php");
+
     }
 }
 ?>
@@ -29,18 +64,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="tw.js"></script>
-    <title>Login Page</title>
+    <title>Signup</title>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-lg bg-white rounded-2xl shadow-lg p-8">
-
+        <div class="w-full bg-red-600 text-white py-3 my-3 rounded-lg transition flex justify-center hidden" id="unavailUser" disabled>
+                Username is taken
+        </div>
+        <div class="w-full bg-red-600 text-white py-3 my-3 rounded-lg transition flex justify-center hidden" id="imageunload" disabled>
+                Profile image didnt upload. Try again
+        </div>
         <h1 class="text-3xl font-bold text-center mb-8">
             Create Account
         </h1>
 
-        <form class="space-y-5" method="post">
+        <form class="space-y-5" method="post" enctype="multipart/form-data">
 
             <!-- Profile Image Upload -->
             <div class="flex flex-col items-center">
@@ -58,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     Upload Image
                 </label>
 
-                <input type="file" id="imageUpload" accept="image/*" class="hidden">
+                <input type="file" id="imageUpload" name="profile_image" accept="image/*" class="hidden">
             </div>
 
             <!-- Username -->

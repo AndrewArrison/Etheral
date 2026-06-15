@@ -7,13 +7,16 @@ if (!isset($_SESSION["user"])) {
     exit();
 }
 include "db.php";
-$id = $_SESSION['id'];
+$id = (int)$_SESSION['id'];
+$sql = "UPDATE users SET last_seen = now() WHERE id = $id";
+mysqli_query($conn, $sql);
 $sql = "SELECT * FROM users WHERE id != $id";
 $result = mysqli_query($conn, $sql);
 if(mysqli_num_rows($result) > 0)
 {
     //TODO continue
 } else {
+    echo "ERROR";
     die();
 }
 ?>
@@ -48,7 +51,7 @@ if(mysqli_num_rows($result) > 0)
                 {?>
                     <a href="#" onclick="submitPost(event, {id:<?= $row['id'] ?>})" class="flex items-center gap-4 p-4 hover:bg-gray-100 border-b transition">
                         <img
-                            src="https://i.pravatar.cc/150?img=1"
+                            src="profilepics/<?= $row['profile_image'] ?>"
                             class="w-14 h-14 rounded-full object-cover"
                         >
 
@@ -101,6 +104,9 @@ if(mysqli_num_rows($result) > 0)
     document.querySelectorAll('.last-seen').forEach(span => {
     span.textContent = timeto12(span.dataset.lastSeen);
     });
+    setInterval(() => {
+    fetch("lastseen.php");
+    }, 45000);
 </script>
 
 </html>

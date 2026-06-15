@@ -1,14 +1,14 @@
 <?php
 
-$servername = "localhost";
-$username = "root";     // Default XAMPP/WAMP user
-$password = "";         // Default XAMPP password is empty
-$dbname = "Chatapp";
-// Create connection
-$conn = mysqli_connect($servername, $username, $password, $dbname);
+// $servername = "localhost";
+// $username = "root";     // Default XAMPP/WAMP user
+// $password = "";         // Default XAMPP password is empty
+// $dbname = "Chatapp";
+// // Create connection
+// $conn = mysqli_connect($servername, $username, $password, $dbname);
 
 session_start();
-//include
+include "db.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -30,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION["user"] = $user["username"];
             $_SESSION["id"] = $user["id"];
             $userid = $user["id"];
-            $sql = "UPDATE users SET last_seen = now() WHERE id = $userid";
+            $sql = "UPDATE users SET last_seen = now(), is_active = '1' WHERE id = $userid";
             mysqli_query($conn, $sql);
             header("Location: viewchat.php");
             exit();
@@ -112,7 +112,7 @@ window.addEventListener('load', () => {
 
         <p class="text-center text-gray-500 mt-6">
             Don't have an account?
-            <a href="#" class="text-blue-600 hover:underline">
+            <a href="register.php" class="text-blue-600 hover:underline">
                 Register
             </a>
         </p>

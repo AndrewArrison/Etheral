@@ -4,7 +4,8 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    profile_image VARCHAR(124) NOT NULL
+    profile_image VARCHAR(124) NOT NULL,
+    is_active BOOLEAN NOT NULL
 );
 
 CREATE TABLE messages (

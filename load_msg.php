@@ -9,6 +9,7 @@ if (!isset($_SESSION["user"])) {
 include "db.php";
 $chat = $_GET['chat'];
 $user = $_SESSION['id'];
+
 $last_message_id = $_GET['last_message_id'];
 
 $sql = "
