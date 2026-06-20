@@ -25,3 +25,4 @@ function updateLastseen()
     fetch("lastseen.php");
     return;
 }
+

@@ -10,7 +10,10 @@ include "db.php";
 $chat = $_GET['chat'];
 $user = $_SESSION['id'];
 
-$last_message_id = $_GET['last_message_id'];
+$last_message_id = isset($_GET['last_message_id']) && $_GET['last_message_id'] !== '' ? (int)$_GET['last_message_id'] : null;
+$before_message_id = isset($_GET['before_message_id']) && $_GET['before_message_id'] !== '' ? (int)$_GET['before_message_id'] : null;
+$bind_id = null;
+$should_reverse = false;
 
 $sql = "
 SELECT *
@@ -20,21 +23,44 @@ WHERE
     (sender_id = ? AND receiver_id = ?)
     OR
     (sender_id = ? AND receiver_id = ?)
-)
-AND id > ?
-ORDER BY created_at ASC
-";
+)";
+
+if ($before_message_id !== null)
+{
+    $sql .= " AND id < ? ORDER BY id DESC LIMIT 10";
+    $bind_id = $before_message_id;
+    $should_reverse = false;
+} elseif($last_message_id !== null)
+{
+    $sql .= " AND id > ? ORDER BY id ASC";
+    $bind_id = $last_message_id;
+    $should_reverse = false;
+} else {
+    $sql .= " ORDER BY id DESC LIMIT 10";
+    $bind_id = null;
+    $should_reverse = true;
+}
 
 $stmt = $conn->prepare($sql);
-
-$stmt->bind_param(
-    "iiiii",
+if ($bind_id !== null)
+{
+    $stmt->bind_param(
+        "iiiii",
+        $user,
+        $chat,
+        $chat,
+        $user,
+        $bind_id
+    );
+} else {
+    $stmt->bind_param(
+    "iiii",
     $user,
     $chat,
     $chat,
-    $user,
-    $last_message_id
+    $user
 );
+}
 
 $stmt->execute();
 
@@ -53,7 +79,13 @@ while ($row = $result->fetch_assoc()) {
             'time' => $row['created_at'] ?? "",
             'msg'    => $row['message_text'] ?? "",
             'filesize' => $row['file_size'] ?? "",
+            'is_old' => ($before_message_id !== null) ? true:false,
+            'msg_date' => $row['created_at'],
     ];
+}
+if ($should_reverse)
+{
+    $messages = array_reverse($messages);
 }
 // Output the entire collection as ONE valid JSON array
 echo json_encode($messages);

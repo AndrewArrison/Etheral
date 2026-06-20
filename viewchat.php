@@ -35,8 +35,8 @@ if(mysqli_num_rows($result) > 0)
 
     <div class="max-w-md mx-auto bg-white h-screen flex flex-col shadow-lg">
         <!-- Top Bar -->
-        <div class="bg-blue-600 text-white p-4 flex items-center gap-4 shadow shrink-0 justify-end">
-            <button class="text-xl">
+        <div class="bg-blue-600 text-white p-4 flex items-center gap-4 shadow shrink-0 justify-end ">
+            <button class="text-xl bg-amber-500  px-2 py-1 rounded-2xl shadow max-w-[75%]">
                 <a href="logout.php">Logout</a>
             </button>
             <!-- <button class="text-xl">
@@ -70,7 +70,7 @@ if(mysqli_num_rows($result) > 0)
                             </div>
 
                             <p class="text-gray-500 truncate">
-                                TODO : Put me
+                                
                             </p>
 
                         </div>
