@@ -186,23 +186,19 @@ $is_active = $result['is_active'];
                     method: 'POST',
                     body: formData
                 });
-                // const text = await res.text();
-                // console.log(text);
                 msgInput.value = '';
                 fileUpload.value = "";
                 previewArea.innerHTML = "";
             } else {
                 const formData = new FormData();
 
-                // 2. Add your text data to the same FormData object
                 formData.append('message', msgInput.value);
                 formData.append('receiver_id', <?=$chatid;?>);
                 const res = await fetch('sent_msg.php', {
                     method: 'POST',
                     body: formData
                 });
-                // const text = await res.text();
-                // console.log(text);
+
                 msgInput.value = '';
             }
         } catch (error) {
@@ -250,7 +246,7 @@ $is_active = $result['is_active'];
         });
 
     });
-    // close selected file
+
     previewArea.addEventListener("click", (e) => {
         if (e.target.closest(".closefile")) {
             fileUpload.value = "";
@@ -259,14 +255,12 @@ $is_active = $result['is_active'];
         }
     });
 
-    // Always stay at bottom
     function scrollToBottom() {
         chatArea.scrollTop = chatArea.scrollHeight;
     }
 
     scrollToBottom();
 
-    // Mobile keyboard resize fix
     if (window.visualViewport) {
 
         window.visualViewport.addEventListener("resize", () => {
@@ -278,64 +272,7 @@ $is_active = $result['is_active'];
         });
     }
 
-    function escapeHtml(str) {
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
 
-    function parseMySQLDate(str) {
-            const [datePart, timePart] = str.split(" ");
-            const [y, m, d] = datePart.split("-").map(Number);
-            const [hh, mm, ss] = (timePart || "00:00:00").split(":").map(Number);
-            return new Date(y, m - 1, d, hh, mm, ss);
-        }
-
-    function formatDateLabel(dateStr) {
-        const msgDate = parseMySQLDate(dateStr);
-        const today = new Date();
-        const yesterday = new Date();
-        yesterday.setDate(today.getDate() - 1);
-
-        const sameDay = (a, b) =>
-            a.getFullYear() === b.getFullYear() &&
-            a.getMonth() === b.getMonth() &&
-            a.getDate() === b.getDate();
-
-        if (sameDay(msgDate, today)) return "Today";
-        if (sameDay(msgDate, yesterday)) return "Yesterday";
-
-        const options = { day: "numeric", month: "long" };
-        if (msgDate.getFullYear() !== today.getFullYear()) {
-            options.year = "numeric";
-        }
-        return msgDate.toLocaleDateString("en-US", options);
-    }
-
-        function renderDateLabels() {
-            // wipe old labels, then re-insert based on current DOM order
-            chatArea.querySelectorAll(".date-label").forEach(el => el.remove());
-
-            const msgEls = chatArea.querySelectorAll(".msg-d");
-            let lastDateKey = null;
-
-            msgEls.forEach(el => {
-                const rawDate = el.dataset.date;
-                if (!rawDate) return;
-                const dateKey = rawDate.split(" ")[0];
-
-                if (dateKey !== lastDateKey) {
-                    lastDateKey = dateKey;
-                    const label = document.createElement("div");
-                    label.className = "date-label flex justify-center my-3";
-                    label.innerHTML = `<span class="bg-gray-300 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">${formatDateLabel(rawDate)}</span>`;
-                    el.insertAdjacentElement("beforebegin", label);
-                }
-            });
-        }
 
     let lastMessageId = 0;
     let beforeMessageId = 0;
@@ -361,7 +298,7 @@ $is_active = $result['is_active'];
                         lastMessageId);
                 }
             }
-            // console.log(response.text());
+
             const data = await response.json();
             let chat = document.getElementById("chatArea");
             let user = <?= $_SESSION['id']; ?>;
@@ -429,7 +366,7 @@ $is_active = $result['is_active'];
                             messageHtml = `<div class="flex msg-d" data-date="${item.msg_date}">
                                             <div class="bg-white px-4 py-3 rounded-2xl shadow max-w-[75%] flex items-center gap-3">
                                             <div class="text-3xl">
-                                                <a href="uploads/${item.filename_store}" download>📄</a>
+                                                <a href="uploads/${item.filename_store}" download="${escapeHtml(item.filename)}">📄</a>
                                             </div>
                                             <div>
                                                 <h2 class="font-medium">
@@ -444,7 +381,7 @@ $is_active = $result['is_active'];
                             messageHtml = `<div class="flex justify-end msg-d" data-date="${item.msg_date}">
                                             <div class="bg-blue-500 px-4 py-3 rounded-2xl shadow max-w-[75%] flex items-center gap-3">
                                             <div class="text-3xl">
-                                                <a href="uploads/${item.filename_store}" download>📄</a>
+                                                <a href="uploads/${item.filename_store}" download="${escapeHtml(item.filename)}">📄</a>
                                             </div>
                                             <div>
                                                 <h2 class="font-medium">
@@ -476,8 +413,6 @@ $is_active = $result['is_active'];
                                     </div>
                                     </div>`;
                         }
-                        // chat.insertAdjacentHTML("beforeend", messageHtml);
-                        // lastMessageId = item.msg_id;
                     }
                     
 
@@ -491,8 +426,6 @@ $is_active = $result['is_active'];
                 }
                 
             });
-            // Optional: Scroll to bottom automatically when new messages arrive
-            // if(data.length > 0) { chat.scrollTop = chat.scrollHeight; }
             if (data.length > 0) {
                 renderDateLabels();
                 if (data[0].is_old) {
@@ -511,7 +444,6 @@ $is_active = $result['is_active'];
         }
     }
     loadMessages();
-    console.log("call");
 
     // load img
     document.addEventListener("click", (e) => {
@@ -570,22 +502,17 @@ $is_active = $result['is_active'];
     let loading = false;
     chatArea.addEventListener("scroll", async () => {
         if (loading) return;
-        // User reached top
         if (chatArea.scrollTop <= 0) {
             loading = true;
             is_load_old = true;
-            console.log("loding");
             loading = false;
-            console.log("done");
         }
     });
 
     window.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
-            // console.log("Enter key was pressed globally!");
             sentmsg();
             we_sent = true;
-            // primaryBtn.click(); // Optional: Programmatically trigger the button click
         }
     });
     </script>
