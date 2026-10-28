@@ -12,7 +12,7 @@ mysqli_query($conn, $sql);
 
 $sql = "
 SELECT u.id, u.username, u.profile_image, u.last_seen,
-       m.message_text, m.message_type, m.created_at
+       m.message_text, m.message_type, m.created_at, public_key
 FROM (
     SELECT
         CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_id,
@@ -37,6 +37,7 @@ $result = $stmt->get_result();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="chat.js"></script>
+    <script src="dist/browsers-sumo/sodium.js"></script>
     <script src="tw.js"></script>
     <title>Chats</title>
 </head>
@@ -55,68 +56,72 @@ $result = $stmt->get_result();
 
         <!-- Search Box -->
         <div class="p-3 border-b shrink-0 relative">
-            <input
-                type="text"
-                id="searchInput"
-                placeholder="Search users..."
-                class="w-full bg-gray-100 rounded-full px-5 py-3 outline-none"
-                autocomplete="off"
-            >
+            <input type="text" id="searchInput" placeholder="Search users..."
+                class="w-full bg-gray-100 rounded-full px-5 py-3 outline-none" autocomplete="off">
             <div id="searchResults"
-                 class="absolute left-3 right-3 bg-white border rounded-xl shadow-lg mt-1 max-h-72 overflow-y-auto hidden z-10">
+                class="absolute left-3 right-3 bg-white border rounded-xl shadow-lg mt-1 max-h-72 overflow-y-auto hidden z-10">
             </div>
         </div>
 
         <!-- Chat List -->
         <div class="flex-1 overflow-y-auto" id="chatList">
             <?php if (mysqli_num_rows($result) > 0): ?>
-                <?php while ($row = $result->fetch_assoc()): ?>
-                    <a href="#" onclick="submitPost(event, {id:<?= $row['id'] ?>})" class="flex items-center gap-4 p-4 hover:bg-gray-100 border-b transition">
-                        <img
-                            src="profilepics/<?= $row['profile_image'] ?>"
-                            class="w-14 h-14 rounded-full object-cover"
-                        >
+            <?php while ($row = $result->fetch_assoc()): ?>
+            <a href="#" onclick="submitPost(event, {id:<?= $row['id'] ?>})"
+                class="flex items-center gap-4 p-4 hover:bg-gray-100 border-b transition">
+                <img src="profilepics/<?= $row['profile_image'] ?>" class="w-14 h-14 rounded-full object-cover">
 
-                        <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0">
 
-                            <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center">
 
-                                <h2 class="font-semibold text-lg truncate">
-                                    <?= htmlspecialchars($row['username']) ?>
-                                </h2>
+                        <h2 class="font-semibold text-lg truncate">
+                            <?= htmlspecialchars($row['username']) ?>
+                        </h2>
 
-                                <span class="text-sm text-gray-500 last-seen" data-last-seen="<?= htmlspecialchars($row['last_seen'], ENT_QUOTES) ?>">
-                                   <?php $rtime = new DateTime($row['last_seen']);
+                        <span class="text-sm text-gray-500 last-seen"
+                            data-last-seen="<?= htmlspecialchars($row['last_seen'], ENT_QUOTES) ?>">
+                            <?php $rtime = new DateTime($row['last_seen']);
                         $ntime = new DateTime(Date("Y-m-d H:i:s"));
                         $delta = $ntime->diff($rtime);
                         echo getActiveStatus($delta);?>
-                                </span>
+                        </span>
 
-                            </div>
-
-                            <p class="text-gray-500 truncate">
-                                <?php
+                    </div>
+                    <!-- // HERE -->
+                    <p class="text-gray-500 truncate">
+                        <?php
                                 if ($row['message_type'] === 'text' || $row['message_type'] === '') {
-                                    echo htmlspecialchars($row['message_text']);
+                                    // echo htmlspecialchars($row['message_text']);
+                                   echo '<span id="msg'.$row['id'].'">Loading...</span>';
+
+                                    echo "<script>
+                                    const t".$row['id']." = setInterval(() => {
+                                        if (privateKey) {
+                                            clearInterval(t".$row['id'].");
+                                            document.getElementById('msg".$row['id']."').innerText =
+                                                decrypt('".$row['public_key']."', privateKey, '".$row['message_text']."');
+                                        }
+                                    }, 1000);
+                                    </script>";
                                 } else {
                                     echo "📎 " . ucfirst($row['message_type']);
                                 }
                                 ?>
-                            </p>
-
-                        </div>
-
-                    </a>
-                <?php endwhile; ?>
+                    </p>
+                </div>
+            </a>
+            <?php endwhile; ?>
             <?php else: ?>
-                <p class="text-center text-gray-400 mt-8">No chats yet. Search above to start one.</p>
+            <p class="text-center text-gray-400 mt-8">No chats yet. Search above to start one.</p>
             <?php endif; ?>
         </div>
 
     </div>
 
-</body>
-<script>
+
+    <script>
+
     function submitPost(event, data) {
         event.preventDefault();
         const form = document.createElement('form');
@@ -169,12 +174,12 @@ $result = $stmt->get_result();
             }
 
             searchResults.innerHTML = users.map(u => `
-                <div class="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer search-result-item"
-                     data-id="${u.id}">
-                    <img src="profilepics/${u.profile_image}" class="w-10 h-10 rounded-full object-cover">
-                    <span class="font-medium">${escapeHtmlClient(u.username)}</span>
-                </div>
-            `).join("");
+                    <div class="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer search-result-item"
+                        data-id="${u.id}">
+                        <img src="profilepics/${u.profile_image}" class="w-10 h-10 rounded-full object-cover">
+                        <span class="font-medium">${escapeHtml(u.username)}</span>
+                    </div>
+                `).join("");
 
             searchResults.classList.remove("hidden");
         } catch (err) {
@@ -186,7 +191,9 @@ $result = $stmt->get_result();
         const item = e.target.closest(".search-result-item");
         if (!item) return;
         const id = item.dataset.id;
-        submitPost(e, { id: id });
+        submitPost(e, {
+            id: id
+        });
     });
 
     // hide results when clicking elsewhere
@@ -196,14 +203,85 @@ $result = $stmt->get_result();
         }
     });
 
-    function escapeHtmlClient(str) {
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-</script>
+    (async () => {
+        await window.sodium.ready;
+        const sodium = window.sodium;
+
+        <?php if ($_SESSION['key_initialized'] != 1 && isset($_SESSION['ps'])): ?>
+
+        const formData = new FormData();
+
+        const Keys = sodium.crypto_box_keypair();
+        const privateKey = Keys.privateKey;
+        const publicKey = Keys.publicKey;
+
+        var salt = sodium.randombytes_buf(16);
+
+        var encryptionKey = sodium.crypto_pwhash(
+            32,
+            <?= json_encode($_SESSION['ps']) ?>,
+            salt,
+            sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
+            sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
+            sodium.crypto_pwhash_ALG_DEFAULT
+        );
+
+        var nonce = sodium.randombytes_buf(24);
+
+        var encryptedPrivateKey = sodium.crypto_secretbox_easy(
+            privateKey,
+            nonce,
+            encryptionKey
+        );
+
+        formData.append('name', <?= json_encode($_SESSION['user']) ?>);
+        formData.append('pk', sodium.to_base64(publicKey));
+        formData.append('key', sodium.to_base64(encryptedPrivateKey));
+        formData.append('nonce', sodium.to_base64(nonce));
+        formData.append('salt', sodium.to_base64(salt));
+
+        res = await fetch('sent_private_key.php', {
+            method: 'POST',
+            body: formData
+        });
+        if (res.ok) {
+            window.location.replace('logout.php');
+        }
+
+        <?php else: ?>
+
+        const getData = new FormData();
+        getData.append('name', <?= json_encode($_SESSION['user']) ?>);
+
+        const res = await fetch('get_private_key.php', {
+            method: 'POST',
+            body: getData
+        });
+
+        const data = await res.json();
+
+        var salt = sodium.from_base64(data.salt);
+        const encryptedKey = sodium.from_base64(data.private_key);
+        var nonce = sodium.from_base64(data.nonce);
+
+        var encryptionKey = sodium.crypto_pwhash(
+            32,
+            <?= json_encode($_SESSION['ps'] ?? '') ?>,
+            salt,
+            sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
+            sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
+            sodium.crypto_pwhash_ALG_DEFAULT
+        );
+
+        var decryptedPrivateKey = sodium.crypto_secretbox_open_easy(
+            encryptedKey,
+            nonce,
+            encryptionKey
+        );
+        privateKey = decryptedPrivateKey;
+        <?php endif; ?>
+    })();
+    </script>
+</body>
 
 </html>

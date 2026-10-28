@@ -87,6 +87,6 @@ if ($should_reverse)
 {
     $messages = array_reverse($messages);
 }
-// Output the entire collection as ONE valid JSON array
+
 echo json_encode($messages);
 exit;

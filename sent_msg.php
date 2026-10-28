@@ -24,11 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_FILES['file']))
     if (!is_dir($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
-    // Original filename (for display)
+    // Original filename
     $original_name = basename($_FILES["file"]["name"]);
-    // Get extension
+    //  extension
     $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
-    // Generate safe storage filename
+    // safe filename
     $stored_name = uniqid('', true) . "." . $extension;
     // Full path
     $targetFile = $targetDir . $stored_name;
