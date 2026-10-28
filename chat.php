@@ -34,7 +34,7 @@ $public_key = $result['public_key']
     <script src="dist/browsers-sumo/sodium.js"></script>
     <script src="tw.js"></script>
 
-    <title>Responsive Chat</title>
+    <title>Etheral</title>
 
     <style>
     html,
