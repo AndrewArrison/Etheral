@@ -5,7 +5,7 @@ Etheral is a messaging application that I built using PHP, JavaScript, MySQL, an
 This project supports one-to-one conversations, allowing you to talk directly with another person. It encrypts messages using client-side cryptography to help keep chats private. This demonstrates how end-to-end encryption can work without relying on a Node.js backend.
 
 ## Features
-
+- End-to-End Encryption
 - Share files
 - Set profile pictures
 - See when people are online
